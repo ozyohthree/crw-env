@@ -6,9 +6,9 @@ projects:
   - name: crw-podman
     source:
       type: git
-      location: https://github.com/ozyohthree/ops-container-images.git
+      location: https://github.com/ozyohthree/crw-env.git
 components:
-  - alias: vscode-dev
+  - alias: ops-toolbox
     type: dockerimage
     image: "quay.io/ohthree/ocp-dev-env:latest"
     memoryLimit: 512Mi
