@@ -16,5 +16,5 @@ components:
     command: ['sleep', 'infinity']
     env:
       - name: HOME
-        value: /home/podman
+        value: /home/build
 ...
