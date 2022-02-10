@@ -16,5 +16,5 @@ components:
     command: ['sleep', 'infinity']
     env:
       - name: HOME
-        value: /home/build
+        value: /home/1001
 ...
