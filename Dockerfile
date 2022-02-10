@@ -19,10 +19,7 @@ RUN dnf update -y && \
     curl -s "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3" | bash && \
     mv /usr/local/bin/helm /usr/bin/helm && \
     curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash && \
-    mv ./kustomize /usr/bin/kustomize && \
-    dnf -y module enable container-tools:rhel8; dnf -y update; rpm --restore --quiet shadow-utils; \
-    dnf -y install crun podman fuse-overlayfs /etc/containers/storage.conf --exclude container-selinux; \
-    rm -rf /var/cache /var/log/dnf* /var/log/yum.*
+    mv ./kustomize /usr/bin/kustomize 
 
 # Install Buildah
 # From: https://catalog.redhat.com/software/containers/rhel8/buildah/5dca3d76dd19c71643b226d5?container-tabs=dockerfile
