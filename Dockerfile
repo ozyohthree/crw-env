@@ -24,26 +24,27 @@ RUN dnf update -y && \
     dnf -y install crun podman fuse-overlayfs /etc/containers/storage.conf --exclude container-selinux; \
     rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
-RUN useradd podman; \
-    echo podman:10000:5000 > /etc/subuid; \
-    echo podman:10000:5000 > /etc/subgid;
+# Install Buildah
+# From: https://catalog.redhat.com/software/containers/rhel8/buildah/5dca3d76dd19c71643b226d5?container-tabs=dockerfile
+# labels for container catalog
+LABEL summary="A command line tool used for creating OCI Images"
+LABEL description="The buildah container provides a command line tool which can be used to create a working container from scratch or to create a working container from an image as a starting point. Also to mount/umount a working container's root file system for manipulation, save container's root file system layer to create a new image and delete a working container or an image."
+LABEL io.k8s.display-name="Buildah"
+LABEL io.openshift.expose-services=""
 
-VOLUME /var/lib/containers
-RUN mkdir -p /home/podman/.local/share/containers
-RUN chown podman:podman -R /home/podman
-VOLUME /home/podman/.local/share/containers
+# Don't include container-selinux and remove
+# directories used by yum that are just taking
+# up space.
+RUN useradd build; dnf -y module enable container-tools:rhel8; dnf -y update; dnf -y reinstall shadow-utils; dnf -y install buildah fuse-overlayfs /etc/containers/storage.conf; rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
-RUN curl -o containers.conf  https://raw.githubusercontent.com/containers/libpod/master/contrib/podmanimage/stable/containers.conf && \
-    mv /containers.conf /etc/containers/containers.conf && \
-    curl -o podman-containers.conf  https://raw.githubusercontent.com/containers/libpod/master/contrib/podmanimage/stable/podman-containers.conf && \
-    mkdir -p /home/podman/.config/containers && \
-    mv /podman-containers.conf /home/podman/.config/containers/containers.conf && \
+# Adjust storage.conf to enable Fuse storage.
+RUN sed -i -e 's|^#mount_program|mount_program|g' -e '/additionalimage.*/a "/var/lib/shared",' /etc/containers/storage.conf
+RUN mkdir -p /var/lib/shared/overlay-images /var/lib/shared/overlay-layers; touch /var/lib/shared/overlay-images/images.lock; touch /var/lib/shared/overlay-layers/layers.lock
 
-# chmod containers.conf and adjust storage.conf to enable Fuse storage.
-RUN chmod 644 /etc/containers/containers.conf; sed -i -e 's|^#mount_program|mount_program|g' -e '/additionalimage.*/a "/var/lib/shared",' -e 's|^mountopt[[:space:]]*=.*$|mountopt = "nodev,fsync=0"|g' /etc/containers/storage.conf
-RUN mkdir -p /var/lib/shared/overlay-images /var/lib/shared/overlay-layers /var/lib/shared/vfs-images /var/lib/shared/vfs-layers; touch /var/lib/shared/overlay-images/images.lock; touch /var/lib/shared/overlay-layers/layers.lock; touch /var/lib/shared/vfs-images/images.lock; touch /var/lib/shared/vfs-layers/layers.lock
-
-ENV _CONTAINERS_USERNS_CONFIGURED=""
+# Set up environment variables to note that this is
+# not starting with usernamespace and default to
+# isolate the filesystem with chroot.
+ENV _BUILDAH_STARTED_IN_USERNS="" BUILDAH_ISOLATION=chroot
 
 # Install node version manager
 # USER 1001
